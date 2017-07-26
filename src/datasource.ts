@@ -27,8 +27,6 @@ export class AppDynamicsDatasource {
         const interpolated = {
             target: this.templateSrv.replace(query, null, 'regex')
         };
-        console.log('interpolated');
-        console.log(query);
         return this.appD.getApplicationNames(query);
     }
 }

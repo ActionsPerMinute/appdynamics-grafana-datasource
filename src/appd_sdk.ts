@@ -1,3 +1,5 @@
+import * as dateMath from 'app/core/utils/datemath';
+
 export class AppDynamicsSDK {
 
     username: string;
@@ -16,35 +18,33 @@ export class AppDynamicsSDK {
     }
 
     query(options) {
-        console.log('OPTIONS');
-        console.log(options);
+        const startTime = (Math.ceil(dateMath.parse(options.range.from)));
+        const endTime = (Math.ceil(dateMath.parse(options.range.to)));
 
         const grafanaResponse = {data: []};
 
         const requests = options.targets.map((target) => {
             return new Promise((resolve) => {
-                console.log('MAP', target);
-                this.getMetrics(target, grafanaResponse, resolve);
+                this.getMetrics(target, grafanaResponse, startTime, endTime, resolve);
 
             });
         });
 
         return Promise.all(requests).then( () => {
-            console.log(grafanaResponse)    ;
             return grafanaResponse;
         } );
 
     }
 
-    getMetrics(target, grafanaResponse, callback) {
-        console.log('getMetrics', target);
+    getMetrics(target, grafanaResponse, startTime, endTime, callback) {
         return this.backendSrv.datasourceRequest({
                 url: this.url + '/controller/rest/applications/' + target.application + '/metric-data',
                 method: 'GET',
                 params: {
                             'metric-path': target.metric,
-                            'time-range-type': 'BEFORE_NOW',
-                            'duration-in-mins': 60 * 6,
+                            'time-range-type': 'BETWEEN_TIMES',
+                            'start-time': startTime,
+                            'end-time': endTime,
                             'rollup': 'false',
                             'output': 'json'
                         },
@@ -62,7 +62,6 @@ export class AppDynamicsSDK {
     }
 
     convertMetricData(metrics, resolve) {
-        console.log('convertMetricData');
 
         const responseArray = [];
 
@@ -91,8 +90,6 @@ export class AppDynamicsSDK {
     }
 
     getApplicationNames(query) {
-        console.log('Trying to get data');
-        console.log(query);
         return this.backendSrv.datasourceRequest({
             url: this.url + '/controller/rest/applications',
             method: 'GET',

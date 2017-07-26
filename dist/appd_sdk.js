@@ -1,5 +1,6 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
+var dateMath = require("app/core/utils/datemath");
 var AppDynamicsSDK = (function () {
     function AppDynamicsSDK(instanceSettings, backendSrv) {
         this.backendSrv = backendSrv;
@@ -11,43 +12,42 @@ var AppDynamicsSDK = (function () {
     }
     AppDynamicsSDK.prototype.query = function (options) {
         var _this = this;
-        console.log('OPTIONS');
-        console.log(options);
+        var startTime = (Math.ceil(dateMath.parse(options.range.from)));
+        var endTime = (Math.ceil(dateMath.parse(options.range.to)));
         var grafanaResponse = { data: [] };
         var requests = options.targets.map(function (target) {
             return new Promise(function (resolve) {
-                console.log('MAP', target);
-                _this.getMetrics(target, grafanaResponse, resolve);
+                _this.getMetrics(target, grafanaResponse, startTime, endTime, resolve);
             });
         });
         return Promise.all(requests).then(function () {
-            console.log(grafanaResponse);
             return grafanaResponse;
         });
     };
-    AppDynamicsSDK.prototype.getMetrics = function (target, grafanaResponse, callback) {
+    AppDynamicsSDK.prototype.getMetrics = function (target, grafanaResponse, startTime, endTime, callback) {
         var _this = this;
-        console.log('getMetrics', target);
         return this.backendSrv.datasourceRequest({
             url: this.url + '/controller/rest/applications/' + target.application + '/metric-data',
             method: 'GET',
             params: {
                 'metric-path': target.metric,
-                'time-range-type': 'BEFORE_NOW',
-                'duration-in-mins': 60 * 6,
+                'time-range-type': 'BETWEEN_TIMES',
+                'start-time': startTime,
+                'end-time': endTime,
                 'rollup': 'false',
                 'output': 'json'
             },
             headers: { 'Content-Type': 'application/json' }
         }).then(function (response) {
-            grafanaResponse.data.push({ target: target.metric,
+            var dividers = target.metric.split('|');
+            var legend = dividers.length > 3 ? dividers[3] : dividers[dividers.length - 1];
+            grafanaResponse.data.push({ target: target.application + ' - ' + legend,
                 datapoints: _this.convertMetricData(response, callback) });
         }).then(function () {
             callback();
         });
     };
     AppDynamicsSDK.prototype.convertMetricData = function (metrics, resolve) {
-        console.log('convertMetricData');
         var responseArray = [];
         metrics.data[0].metricValues.forEach(function (metricValue) {
             responseArray.push([metricValue.current, metricValue.startTimeInMillis]);
@@ -72,8 +72,6 @@ var AppDynamicsSDK = (function () {
     };
     AppDynamicsSDK.prototype.getApplicationNames = function (query) {
         var _this = this;
-        console.log('Trying to get data');
-        console.log(query);
         return this.backendSrv.datasourceRequest({
             url: this.url + '/controller/rest/applications',
             method: 'GET',

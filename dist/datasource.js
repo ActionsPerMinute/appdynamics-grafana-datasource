@@ -1,5 +1,5 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 var appd_sdk_1 = require("./appd_sdk");
 var AppDynamicsDatasource = (function () {
     function AppDynamicsDatasource(instanceSettings, $q, backendSrv, templateSrv) {
@@ -22,8 +22,6 @@ var AppDynamicsDatasource = (function () {
         var interpolated = {
             target: this.templateSrv.replace(query, null, 'regex')
         };
-        console.log('interpolated');
-        console.log(query);
         return this.appD.getApplicationNames(query);
     };
     return AppDynamicsDatasource;

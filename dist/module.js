@@ -1,5 +1,5 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 var datasource_1 = require("./datasource");
 exports.Datasource = datasource_1.AppDynamicsDatasource;
 var query_ctrl_1 = require("./query_ctrl");

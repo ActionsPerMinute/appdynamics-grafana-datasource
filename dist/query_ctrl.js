@@ -9,7 +9,7 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 var sdk_1 = require("app/plugins/sdk");
 var AppDynamicsQueryCtrl = (function (_super) {
     __extends(AppDynamicsQueryCtrl, _super);
