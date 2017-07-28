@@ -1,5 +1,5 @@
 import { AppDynamicsDatasource } from './datasource';
-import {AppDynamicsQueryCtrl} from './query_ctrl';
+import { AppDynamicsQueryCtrl } from './query_ctrl';
 
 class AppDynamicsConfigCtrl {
     static templateUrl = 'partials/config.html';

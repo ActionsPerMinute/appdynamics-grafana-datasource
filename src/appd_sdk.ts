@@ -52,7 +52,6 @@ export class AppDynamicsSDK {
             }).then ( (response) => {
 
                 const dividers = target.metric.split('|');
-
                 const legend = dividers.length > 3 ? dividers[3] : dividers[dividers.length - 1];
                 grafanaResponse.data.push({target: target.application + ' - ' + legend,
                                            datapoints: this.convertMetricData(response, callback)});
@@ -62,13 +61,13 @@ export class AppDynamicsSDK {
     }
 
     convertMetricData(metrics, resolve) {
-
         const responseArray = [];
 
-        metrics.data[0].metricValues.forEach( (metricValue) => {
+        if (metrics.data.length > 0) {
+            metrics.data[0].metricValues.forEach( (metricValue) => {
             responseArray.push([metricValue.current, metricValue.startTimeInMillis]);
-        });
-
+            });
+        }
         return responseArray;
     }
 
@@ -96,19 +95,52 @@ export class AppDynamicsSDK {
             params: { output: 'json'}
             }).then( (response) => {
                 if (response.status === 200) {
-                    return this.getFilteredAppNames(query, response.data);
+                    return this.getFilteredNames(query, response.data);
                 }else {
                     return [];
                 }
 
+            }).catch( (error) => {
+                return [];
             });
     }
 
-    getFilteredAppNames(query, apps) {
+    getMetricNames(app, query) {
 
-        const appNames = apps.map( (app) =>  app.name);
-        return appNames.filter( (app) => {
-            return app.toLowerCase().indexOf(query.toLowerCase()) !== -1;
+        const params = { output: 'json'};
+        if (query.indexOf('|') > -1) {
+            params['metric-path'] = query;
+        }
+
+        return this.backendSrv.datasourceRequest({
+            url: this.url + '/controller/rest/applications/' + app +  '/metrics',
+            method: 'GET',
+            params
+            }).then( (response) => {
+                if (response.status === 200) {
+                    console.log(response.data);
+                    return this.getFilteredNames(query, response.data);
+                }else {
+                    return [];
+                }
+
+            }).catch( (error) => {
+                return [];
+            });
+
+    }
+
+    getFilteredNames(query, arrayResponse) {
+
+        let prefix = '';
+
+        if (query.indexOf('|') > -1) {
+            prefix = query.slice(0, query.lastIndexOf('|') + 1);
+        }
+
+        const elements = arrayResponse.map( (element) =>  prefix + element.name);
+        return elements.filter( (element) => {
+            return element.toLowerCase().indexOf(query.toLowerCase()) !== -1;
         });
     }
 }

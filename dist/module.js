@@ -7,14 +7,14 @@ exports.QueryCtrl = query_ctrl_1.AppDynamicsQueryCtrl;
 var AppDynamicsConfigCtrl = (function () {
     function AppDynamicsConfigCtrl() {
     }
+    AppDynamicsConfigCtrl.templateUrl = 'partials/config.html';
     return AppDynamicsConfigCtrl;
 }());
-AppDynamicsConfigCtrl.templateUrl = 'partials/config.html';
 exports.ConfigCtrl = AppDynamicsConfigCtrl;
 var AppDynamicsQueryOptionsCtrl = (function () {
     function AppDynamicsQueryOptionsCtrl() {
     }
+    AppDynamicsQueryOptionsCtrl.templateUrl = 'partials/query.options.html';
     return AppDynamicsQueryOptionsCtrl;
 }());
-AppDynamicsQueryOptionsCtrl.templateUrl = 'partials/query.options.html';
 exports.QueryOptionsCtrl = AppDynamicsQueryOptionsCtrl;

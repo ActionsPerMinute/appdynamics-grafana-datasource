@@ -24,6 +24,10 @@ var AppDynamicsQueryCtrl = (function (_super) {
             _this.appD.getApplicationNames(query)
                 .then(callback);
         };
+        _this.getMetricNames = function (query, callback) {
+            _this.appD.getMetricNames(_this.target.application, query)
+                .then(callback);
+        };
         return _this;
     }
     AppDynamicsQueryCtrl.prototype.toggleEditorMode = function () {
@@ -32,7 +36,7 @@ var AppDynamicsQueryCtrl = (function (_super) {
     AppDynamicsQueryCtrl.prototype.onChangeInternal = function () {
         this.panelCtrl.refresh(); // Asks the panel to refresh data.
     };
+    AppDynamicsQueryCtrl.templateUrl = 'partials/query.editor.html';
     return AppDynamicsQueryCtrl;
 }(sdk_1.QueryCtrl));
-AppDynamicsQueryCtrl.templateUrl = 'partials/query.editor.html';
 exports.AppDynamicsQueryCtrl = AppDynamicsQueryCtrl;

@@ -49,9 +49,11 @@ var AppDynamicsSDK = (function () {
     };
     AppDynamicsSDK.prototype.convertMetricData = function (metrics, resolve) {
         var responseArray = [];
-        metrics.data[0].metricValues.forEach(function (metricValue) {
-            responseArray.push([metricValue.current, metricValue.startTimeInMillis]);
-        });
+        if (metrics.data.length > 0) {
+            metrics.data[0].metricValues.forEach(function (metricValue) {
+                responseArray.push([metricValue.current, metricValue.startTimeInMillis]);
+            });
+        }
         return responseArray;
     };
     AppDynamicsSDK.prototype.testDatasource = function () {
@@ -78,17 +80,45 @@ var AppDynamicsSDK = (function () {
             params: { output: 'json' }
         }).then(function (response) {
             if (response.status === 200) {
-                return _this.getFilteredAppNames(query, response.data);
+                return _this.getFilteredNames(query, response.data);
             }
             else {
                 return [];
             }
+        }).catch(function (error) {
+            return [];
         });
     };
-    AppDynamicsSDK.prototype.getFilteredAppNames = function (query, apps) {
-        var appNames = apps.map(function (app) { return app.name; });
-        return appNames.filter(function (app) {
-            return app.toLowerCase().indexOf(query.toLowerCase()) !== -1;
+    AppDynamicsSDK.prototype.getMetricNames = function (app, query) {
+        var _this = this;
+        var params = { output: 'json' };
+        if (query.indexOf('|') > -1) {
+            params['metric-path'] = query;
+        }
+        return this.backendSrv.datasourceRequest({
+            url: this.url + '/controller/rest/applications/' + app + '/metrics',
+            method: 'GET',
+            params: params
+        }).then(function (response) {
+            if (response.status === 200) {
+                console.log(response.data);
+                return _this.getFilteredNames(query, response.data);
+            }
+            else {
+                return [];
+            }
+        }).catch(function (error) {
+            return [];
+        });
+    };
+    AppDynamicsSDK.prototype.getFilteredNames = function (query, arrayResponse) {
+        var prefix = '';
+        if (query.indexOf('|') > -1) {
+            prefix = query.slice(0, query.lastIndexOf('|') + 1);
+        }
+        var elements = arrayResponse.map(function (element) { return prefix + element.name; });
+        return elements.filter(function (element) {
+            return element.toLowerCase().indexOf(query.toLowerCase()) !== -1;
         });
     };
     return AppDynamicsSDK;

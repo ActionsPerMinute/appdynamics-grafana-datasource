@@ -8,15 +8,20 @@ AppDynamics datasource for grafana.
 
 The plugin is not yet on the grafana plugins list, so it can't be installed with grafana-cli.
 
-1. docker run -d -p 3000:3000 --name grafana grafana/grafana
-2. docker exec -it grafana bash -c 'curl -sf -o /tmp/v0.0.1-alpha.tar.gz -L https://codeload.github.com/dlopes7/appdynamics-grafana-datasource/tar.gz/v0.0.1-alpha; tar -xvf /tmp/v0.0.1-alpha.tar.gz -C /var/lib/grafana/plugins'
-3. docker restart grafana
+With the commands below, grafana will start on localhost:3000 (192.168.99.100:3000 if on windows)
+Any changes you make to the code will be synced with the docker container, which us useful.
+
+1. ``git clone https://github.com/dlopes7/appdynamics-grafana-datasource``
+2. ``docker run -d -p 3000:3000 --name grafana -v `pwd`:/var/lib/grafana/plugins/appdynamics-grafana-datasource/ grafana/grafana``
 
 ## Without docker
 
 1. Install and bring grafana up (tested with grafana 4.4)
 2. Clone this project to the grafana plugins folder (default /var/lib/grafana/plugins)
-3. Configure a Datasource, the access should be "proxy" because of cross scripting.
+
+## Note on the Datasource config
+
+Use proxy access and basic authentication!
 
 ![config](http://i.imgur.com/NsSTbDn.png)
 
