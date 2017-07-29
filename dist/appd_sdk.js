@@ -1,10 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var dateMath = require("app/core/utils/datemath");
+/*
+    This is the class where all AppD logic should reside.
+    This gets Application Names, Metric Names and queries the API
+*/
 var AppDynamicsSDK = (function () {
     function AppDynamicsSDK(instanceSettings, backendSrv) {
         this.backendSrv = backendSrv;
-        // Controller settings porra
+        // Controller settings
         this.username = instanceSettings.username;
         this.password = instanceSettings.password;
         this.url = instanceSettings.url;
@@ -15,6 +19,7 @@ var AppDynamicsSDK = (function () {
         var startTime = (Math.ceil(dateMath.parse(options.range.from)));
         var endTime = (Math.ceil(dateMath.parse(options.range.to)));
         var grafanaResponse = { data: [] };
+        // For each one of the metrics the user entered:
         var requests = options.targets.map(function (target) {
             return new Promise(function (resolve) {
                 _this.getMetrics(target, grafanaResponse, startTime, endTime, resolve);
@@ -39,21 +44,24 @@ var AppDynamicsSDK = (function () {
             },
             headers: { 'Content-Type': 'application/json' }
         }).then(function (response) {
-            var dividers = target.metric.split('|');
-            var legend = dividers.length > 3 ? dividers[3] : dividers[dividers.length - 1];
-            grafanaResponse.data.push({ target: target.application + ' - ' + legend,
-                datapoints: _this.convertMetricData(response, callback) });
+            // A single metric can have multiple results if the user chose to use a wildcard
+            // Iterates on every result.
+            response.data.forEach(function (metricElement) {
+                var dividers = metricElement.metricPath.split('|');
+                var legend = dividers.length > 3 ? dividers[3] : metricElement.metricPath;
+                grafanaResponse.data.push({ target: legend,
+                    datapoints: _this.convertMetricData(metricElement, callback) });
+            });
         }).then(function () {
             callback();
         });
     };
-    AppDynamicsSDK.prototype.convertMetricData = function (metrics, resolve) {
+    // This helper method just converts the AppD response to the Grafana format
+    AppDynamicsSDK.prototype.convertMetricData = function (metricElement, resolve) {
         var responseArray = [];
-        if (metrics.data.length > 0) {
-            metrics.data[0].metricValues.forEach(function (metricValue) {
-                responseArray.push([metricValue.current, metricValue.startTimeInMillis]);
-            });
-        }
+        metricElement.metricValues.forEach(function (metricValue) {
+            responseArray.push([metricValue.current, metricValue.startTimeInMillis]);
+        });
         return responseArray;
     };
     AppDynamicsSDK.prototype.testDatasource = function () {
@@ -116,7 +124,9 @@ var AppDynamicsSDK = (function () {
         if (query.indexOf('|') > -1) {
             prefix = query.slice(0, query.lastIndexOf('|') + 1);
         }
-        var elements = arrayResponse.map(function (element) { return prefix + element.name; });
+        // Here we are obtaining an array of elements, if they happen to be of type folder, we add a '|' to help the user.
+        var elements = arrayResponse.map(function (element) { return prefix + element.name + (element.type === 'folder' ? '|' : ''); });
+        // Only return the elements that match what the user typed, this is the essence of autocomplete.
         return elements.filter(function (element) {
             return element.toLowerCase().indexOf(query.toLowerCase()) !== -1;
         });

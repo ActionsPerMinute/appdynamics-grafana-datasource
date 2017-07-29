@@ -2,7 +2,7 @@
 
 AppDynamics datasource for grafana.
 
-![example_dashboard](http://imgur.com/MIBYyCY.jpg)
+![example_dashboard](http://imgur.com/ayL8kFO.jpg)
 
 ## With docker
 
@@ -21,9 +21,9 @@ Any changes you make to the code will be synced with the docker container, which
 
 ## Note on the Datasource config
 
-Use proxy access and basic authentication!
+Use proxy access (to avoid CORS and users looking up your password) and basic authentication.
 
-![config](http://i.imgur.com/NsSTbDn.png)
+![config](http://i.imgur.com/ayL8kFO.jpg)
 
 ## For the devs out there:
 
