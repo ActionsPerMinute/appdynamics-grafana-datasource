@@ -29,13 +29,54 @@ var AppDynamicsSDK = (function () {
             return grafanaResponse;
         });
     };
+    /*
+        generaliseRegexp:
+            Takes a metric path and strips out the segments which look like
+            regular expressions replacing them with *. It then saves off the
+            regular expression list to apply later in metricRegexpMatch.
+    */
+    AppDynamicsSDK.prototype.generaliseRegexp = function (target) {
+        // Match does not include () (which exist in the Average response time (ms)) or |.
+        var containsregex = /[\^\[\]\\\{\}\$\?\*\.]/;
+        var matchanyregexp = /.*/;
+        target.originaldividers = target.metric.split('|');
+        target.generaliseddividers = [];
+        target.regexps = [];
+        // replace regexps with a *, and save off the list.
+        target.originaldividers.forEach(function (division) {
+            if (containsregex.test(division) && division != '*') {
+                // replace regexps-like segment with a * for the api call
+                target.generaliseddividers.push('*');
+                target.regexps.push(new RegExp(division, 'i'));
+            }
+            else {
+                target.generaliseddividers.push(division);
+                target.regexps.push(matchanyregexp);
+            }
+        });
+        // create the api call metric with '*' replacing the regexps
+        target.generalisedmetric = target.generaliseddividers.join('|');
+    };
+    /*
+        metricRegexpMatch:
+            check a metric path against a list of regular expressions generated
+            in generaliseRegexp.
+    */
+    AppDynamicsSDK.prototype.metricRegexpMatch = function (dividers, regexps) {
+        // check each path segement against the list of regexps
+        for (var _i = 0; _i < dividers.length; _i++)
+            if (regexps[_i].test(dividers[_i]) == false)
+                return false;
+        return true;
+    };
     AppDynamicsSDK.prototype.getMetrics = function (target, grafanaResponse, startTime, endTime, callback) {
         var _this = this;
+        this.generaliseRegexp(target);
         return this.backendSrv.datasourceRequest({
             url: this.url + '/controller/rest/applications/' + target.application + '/metric-data',
             method: 'GET',
             params: {
-                'metric-path': target.metric,
+                'metric-path': target.generalisedmetric,
                 'time-range-type': 'BETWEEN_TIMES',
                 'start-time': startTime,
                 'end-time': endTime,
@@ -49,8 +90,9 @@ var AppDynamicsSDK = (function () {
             response.data.forEach(function (metricElement) {
                 var dividers = metricElement.metricPath.split('|');
                 var legend = dividers.length > 3 ? dividers[3] : metricElement.metricPath;
-                grafanaResponse.data.push({ target: legend,
-                    datapoints: _this.convertMetricData(metricElement, callback) });
+                if (_this.metricRegexpMatch(dividers, target.regexps))
+                    grafanaResponse.data.push({ target: legend,
+                        datapoints: _this.convertMetricData(metricElement, callback) });
             });
         }).then(function () {
             callback();
