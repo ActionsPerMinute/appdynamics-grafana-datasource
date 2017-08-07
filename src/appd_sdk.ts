@@ -60,8 +60,26 @@ export class AppDynamicsSDK {
                 // A single metric can have multiple results if the user chose to use a wildcard
                 // Iterates on every result.
                 response.data.forEach( (metricElement) => {
-                    const dividers = metricElement.metricPath.split('|');
-                    const legend = dividers.length > 3 ? dividers[3] : metricElement.metricPath;
+
+                    const pathSplit = metricElement.metricPath.split('|');
+                    let legend = target.showAppOnLegend ? target.application + ' - ' : '' ;
+
+                    // Legend options
+                    switch (target.transformLegend) {
+                        case 'Segments': // TODO: Maybe a Regex option as well
+                            const segments = target.transformLegendText.split(',');
+                            for (let i = 0; i < segments.length; i++) {
+                                const segment = Number(segments[i]) - 1;
+                                if (segment < pathSplit.length) {
+                                    legend += pathSplit[segment] + (i === (segments.length - 1) ? '' : '|');
+                                }
+                            }
+                            break;
+
+                        default:
+                            legend += metricElement.metricPath;
+                    }
+
                     grafanaResponse.data.push({target: legend,
                                                datapoints: this.convertMetricData(metricElement, callback)});
                 });
@@ -83,13 +101,15 @@ export class AppDynamicsSDK {
 
     testDatasource() {
         return this.backendSrv.datasourceRequest({
-            url: this.url + '/api/controllerflags', // TODO: Change this to a faster controller api call.
-            method: 'GET'
+            url: this.url + '/controller/rest/applications', // TODO: Change this to a faster controller api call.
+            method: 'GET',
+            params: { output: 'json'}
             }).then( (response) => {
                 if (response.status === 200) {
-                    return { status: 'success', message: 'Data source is working', title: 'Success' };
+                    const numberOfApps = response.data.length;
+                    return { status: 'success', message: 'Data source is working, found ' + numberOfApps + ' apps', title: 'Success' };
                 }else {
-                    return { status: 'failure', message: 'Data source is not working', title: 'Failure' };
+                    return { status: 'failure', message: 'Data source is not working: ' + response.status, title: 'Failure' };
                 }
 
             });
@@ -128,7 +148,6 @@ export class AppDynamicsSDK {
             params
             }).then( (response) => {
                 if (response.status === 200) {
-                    console.log(response.data);
                     return this.getFilteredNames(query, response.data);
                 }else {
                     return [];

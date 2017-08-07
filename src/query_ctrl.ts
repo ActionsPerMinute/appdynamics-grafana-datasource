@@ -7,6 +7,7 @@ export class AppDynamicsQueryCtrl extends QueryCtrl {
     appD: any;
     getApplicationNames: any;
     getMetricNames: any;
+    transformLegendOptions: object[];
 
     constructor($scope, $injector, private $q, private uiSegmentSrv, private templateSrv)  {
         super($scope, $injector);

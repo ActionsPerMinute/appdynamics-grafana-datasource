@@ -32,6 +32,31 @@
               ng-blur="ctrl.onChangeInternal()">
         </input>
       </div>
+
+      <gf-form-switch class="gf-form" label="App on legend" checked="ctrl.target.showAppOnLegend" on-change="ctrl.onChangeInternal()">
+    </gf-form-switch>
+
+      <div class="gf-form-select-wrapper">
+        <select class="gf-form-input"
+              ng-model="ctrl.target.transformLegend"
+              ng-init="ctrl.target.transformLegend = ctrl.target.transformLegend || 'Full Path'"
+              ng-options="t for t in ['Full Path', 'Segments']"
+              ng-change="ctrl.onChangeInternal()">
+        </select>
+      </div>
+
+      <div class="gf-form" ng-if="ctrl.target.transformLegend != 'Full Path'">
+        <input type="text"
+              class="gf-form-input"
+              ng-model="ctrl.target.transformLegendText"
+              spellcheck='false'
+              match-all="true"
+              min-length="1"
+              data-min-length=0 data-items=100
+              ng-blur="ctrl.onChangeInternal()">
+        </input>
+      </div>
+
 </div>
 
 

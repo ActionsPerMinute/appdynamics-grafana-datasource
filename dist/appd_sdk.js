@@ -47,8 +47,22 @@ var AppDynamicsSDK = (function () {
             // A single metric can have multiple results if the user chose to use a wildcard
             // Iterates on every result.
             response.data.forEach(function (metricElement) {
-                var dividers = metricElement.metricPath.split('|');
-                var legend = dividers.length > 3 ? dividers[3] : metricElement.metricPath;
+                var pathSplit = metricElement.metricPath.split('|');
+                var legend = target.showAppOnLegend ? target.application + ' - ' : '';
+                // Legend options
+                switch (target.transformLegend) {
+                    case 'Segments':// TODO: Maybe a Regex option as well
+                        var segments = target.transformLegendText.split(',');
+                        for (var i = 0; i < segments.length; i++) {
+                            var segment = Number(segments[i]) - 1;
+                            if (segment < pathSplit.length) {
+                                legend += pathSplit[segment] + (i === (segments.length - 1) ? '' : '|');
+                            }
+                        }
+                        break;
+                    default:
+                        legend += metricElement.metricPath;
+                }
                 grafanaResponse.data.push({ target: legend,
                     datapoints: _this.convertMetricData(metricElement, callback) });
             });
@@ -66,14 +80,16 @@ var AppDynamicsSDK = (function () {
     };
     AppDynamicsSDK.prototype.testDatasource = function () {
         return this.backendSrv.datasourceRequest({
-            url: this.url + '/api/controllerflags',
-            method: 'GET'
+            url: this.url + '/controller/rest/applications',
+            method: 'GET',
+            params: { output: 'json' }
         }).then(function (response) {
             if (response.status === 200) {
-                return { status: 'success', message: 'Data source is working', title: 'Success' };
+                var numberOfApps = response.data.length;
+                return { status: 'success', message: 'Data source is working, found ' + numberOfApps + ' apps', title: 'Success' };
             }
             else {
-                return { status: 'failure', message: 'Data source is not working', title: 'Failure' };
+                return { status: 'failure', message: 'Data source is not working: ' + response.status, title: 'Failure' };
             }
         });
     };
@@ -109,7 +125,6 @@ var AppDynamicsSDK = (function () {
             params: params
         }).then(function (response) {
             if (response.status === 200) {
-                console.log(response.data);
                 return _this.getFilteredNames(query, response.data);
             }
             else {
